@@ -285,8 +285,8 @@ class _TasksViewState extends State<TasksView> {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: _isCompletedExpanded
-                                ? const Color(0xFFE5A96A).withOpacity(0.7)
-                                : const Color(0xFF535882).withOpacity(0.5),
+                                ? const Color(0xFFE5A96A).withValues(alpha: 0.7)
+                                : const Color(0xFF535882).withValues(alpha: 0.5),
                             width: 1.5,
                           ),
                         ),

@@ -12,6 +12,8 @@ class HomeView extends StatefulWidget {
   final String userAvatar;
   final int userXp;
   final Map<String, int> allAvatarXps;
+  final int streakCount;
+  final bool isStreakActive;
   final Function(String, String) onUserPrefsChanged;
   final Function(int) onUserXpGained;
   final Function(String) onTaskToggled;
@@ -23,6 +25,8 @@ class HomeView extends StatefulWidget {
     required this.userAvatar,
     required this.userXp,
     required this.allAvatarXps,
+    required this.streakCount,
+    required this.isStreakActive,
     required this.onUserPrefsChanged,
     required this.onUserXpGained,
     required this.onTaskToggled,
@@ -60,6 +64,120 @@ class _HomeViewState extends State<HomeView> {
       _currentTime =
           "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
     });
+  }
+
+  // --- TABANDAN HİZALANAN VE BOŞLUKLARI DENGELENMİŞ ALEV ---
+  Widget _buildStreakFire(int count) {
+    final String fireAsset;
+    final double scaleFactor;
+
+    if (count >= 61) {
+      fireAsset = 'img/pixel_fire_6.png';
+      scaleFactor = 1.0;
+    } else if (count >= 31) {
+      fireAsset = 'img/pixel_fire_5.png';
+      scaleFactor = 1.15;
+    } else if (count >= 16) {
+      fireAsset = 'img/pixel_fire_4.png';
+      scaleFactor = 1.35;
+    } else if (count >= 8) {
+      fireAsset = 'img/pixel_fire_3.png';
+      scaleFactor = 1.55;
+    } else if (count >= 4) {
+      fireAsset = 'img/pixel_fire_2.png';
+      scaleFactor = 1.8;
+    } else {
+      fireAsset = 'img/pixel_fire_1.png';
+      scaleFactor = 2.2;
+    }
+
+    return SizedBox(
+      width: 24,
+      height: 28,
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Transform.scale(
+          scale: scaleFactor,
+          alignment: Alignment.bottomCenter,
+          child: Image.asset(
+            fireAsset,
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- TIKLANABİLİR VE 5 SANİYELİK POPUP AÇAN KAPSÜL ROZET ---
+  Widget _buildStreakBadge(int count) {
+    return GestureDetector(
+      onTap: () {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFF282A45),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: Color(0xFFE5A96A), width: 1.5),
+            ),
+            duration: const Duration(seconds: 5),
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            content: Row(
+              children: [
+                _buildStreakFire(count),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    "$count gündür rutinlerinizi aksatmıyorsunuz!",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1F36),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFFE5A96A).withValues(alpha: 0.8),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _buildStreakFire(count),
+            const SizedBox(width: 4),
+            Text(
+              "$count",
+              style: const TextStyle(
+                color: Color(0xFFE5A96A),
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _startTimer() {
@@ -222,7 +340,6 @@ class _HomeViewState extends State<HomeView> {
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   const SizedBox(height: 8),
-
                   SizedBox(
                     height: 220,
                     child: GridView.builder(
@@ -331,10 +448,7 @@ class _HomeViewState extends State<HomeView> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16), // YENİ EKLENEN BOŞLUK
-                  // ==========================================
-                  // YENİ: GİZLİLİK VE VERİ SİLİNME NOTU
-                  // ==========================================
+                  const SizedBox(height: 16),
                   const Text(
                     "Dikkatinize! Tüm verileriniz yalnızca bu cihazda (yerel olarak) saklanır. Uygulamayı silmeniz durumunda tüm kayıtlarınız kalıcı olarak silinebilir.",
                     textAlign: TextAlign.center,
@@ -481,61 +595,76 @@ class _HomeViewState extends State<HomeView> {
             children: [
               RetroCard(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 24.0,
-                  vertical: 12.0,
+                  horizontal: 14.0,
+                  vertical: 10.0,
                 ),
                 child: Row(
                   children: [
-                    const SizedBox(width: 68, height: 48),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Selam, ${widget.userName}!",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                    const SizedBox(width: 66, height: 48),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "Selam, ${widget.userName}!",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.star,
-                              color: Color(0xFFE5A96A),
-                              size: 14,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              "Seviye $currentLevel",
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.star,
+                                color: Color(0xFFE5A96A),
+                                size: 13,
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              "($currentLevelXp/${LevelSystem.xpPerLevel} XP)",
-                              style: const TextStyle(
-                                color: Colors.white38,
-                                fontSize: 11,
+                              const SizedBox(width: 3),
+                              Text(
+                                "Seviye $currentLevel",
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  "($currentLevelXp/${LevelSystem.xpPerLevel})",
+                                  style: const TextStyle(
+                                    color: Colors.white38,
+                                    fontSize: 10,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 6),
+
+                    // --- CANLI VE TIKLANABİLİR STREAK ROZETİ ---
+                    if (widget.isStreakActive && widget.streakCount > 0) ...[
+                      _buildStreakBadge(widget.streakCount),
+                      const SizedBox(width: 6),
+                    ],
+
                     GestureDetector(
                       onTap: _showSettingsModal,
                       child: const Padding(
-                        padding: EdgeInsets.all(4.0),
+                        padding: EdgeInsets.all(2.0),
                         child: Icon(
                           Icons.settings,
                           color: Colors.white,
-                          size: 24,
+                          size: 22,
                         ),
                       ),
                     ),

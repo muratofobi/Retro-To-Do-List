@@ -26,7 +26,7 @@ class RetroCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE5A96A), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             blurRadius: 4,
             offset: const Offset(0, 4),
           ),

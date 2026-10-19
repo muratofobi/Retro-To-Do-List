@@ -5,7 +5,6 @@ import 'screens/main_wrapper.dart';
 import 'services/notification_service.dart';
 
 void main() {
-  // Arka plan işlemlerini beklemeden arayüzü çizmek için runApp'i doğrudan tetikliyoruz.
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const LoFiToDoApp());
 }
@@ -13,7 +12,6 @@ void main() {
 class LoFiToDoApp extends StatelessWidget {
   const LoFiToDoApp({super.key});
 
-  // Tüm kritik başlangıç işlemlerini bu fonksiyonun içine aldık
   Future<Map<String, dynamic>> _loadSystemData() async {
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -31,7 +29,7 @@ class LoFiToDoApp extends StatelessWidget {
 
     final notificationService = NotificationService();
     await notificationService.init();
-    await notificationService.requestPermissions(); // İŞTE BURAYA AWAIT EKLENDİ
+    await notificationService.requestPermissions();
 
     return {
       'name': savedName,
@@ -53,11 +51,9 @@ class LoFiToDoApp extends StatelessWidget {
           surface: Color(0xFF282A45),
         ),
       ),
-      // FutureBuilder sayesinde uygulama kilitlenmez, veriler yüklenirken arayüz çizer
       home: FutureBuilder<Map<String, dynamic>>(
         future: _loadSystemData(),
         builder: (context, snapshot) {
-          // 1. DURUM: Veriler henüz yükleniyor (Siyah ekran + Yükleme ikonu)
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
               body: Center(
@@ -76,7 +72,6 @@ class LoFiToDoApp extends StatelessWidget {
             );
           }
 
-          // 2. DURUM: Arka planda bir kod/paket çöktü (Kırmızı Hata Ekranı)
           if (snapshot.hasError) {
             return Scaffold(
               backgroundColor: Colors.red.shade900,
@@ -93,7 +88,6 @@ class LoFiToDoApp extends StatelessWidget {
             );
           }
 
-          // 3. DURUM: Her şey kusursuz yüklendi, ana uygulamayı başlat!
           final data = snapshot.data!;
           if (data['name'] == null) {
             return NamePromptScreen(allAvatarXps: data['xps']);
@@ -109,10 +103,6 @@ class LoFiToDoApp extends StatelessWidget {
     );
   }
 }
-
-// ----------------------------------------------------
-// AŞAĞISI BİREBİR SENİN TASARLADIĞIN EKRAN (DEĞİŞMEDİ)
-// ----------------------------------------------------
 
 class NamePromptScreen extends StatefulWidget {
   final Map<String, int> allAvatarXps;
@@ -269,6 +259,7 @@ class _NamePromptScreenState extends State<NamePromptScreen> {
                         const SizedBox(height: 12),
                         const Text(
                           "Yeni Bir Başlangıç",
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 22,
@@ -342,11 +333,11 @@ class _NamePromptScreenState extends State<NamePromptScreen> {
                             physics: const BouncingScrollPhysics(),
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 6,
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
-                                  childAspectRatio: 1.0,
-                                ),
+                              crossAxisCount: 6,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                              childAspectRatio: 1.0,
+                            ),
                             itemCount: 48,
                             itemBuilder: (context, index) {
                               String iconName = 'Icon${index + 1}';
@@ -383,12 +374,12 @@ class _NamePromptScreenState extends State<NamePromptScreen> {
                                       gaplessPlayback: true,
                                       errorBuilder:
                                           (context, error, stackTrace) => Icon(
-                                            Icons.person,
-                                            color: isSelected
-                                                ? const Color(0xFF282A45)
-                                                : Colors.white54,
-                                            size: 20,
-                                          ),
+                                        Icons.person,
+                                        color: isSelected
+                                            ? const Color(0xFF282A45)
+                                            : Colors.white54,
+                                        size: 20,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -437,9 +428,6 @@ class _NamePromptScreenState extends State<NamePromptScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        // ==========================================
-                        // YENİ: GİZLİLİK VE VERİ SİLİNME NOTU EKLENDİ
-                        // ==========================================
                         const Text(
                           "Dikkatinize! Tüm verileriniz yalnızca bu cihazda (yerel olarak) saklanır. Uygulamayı silmeniz durumunda tüm kayıtlarınız kalıcı olarak silinebilir.",
                           textAlign: TextAlign.center,

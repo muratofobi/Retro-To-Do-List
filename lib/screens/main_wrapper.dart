@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert'; // YENİ: JSON dönüşümleri için eklendi
+import 'dart:convert';
 import '../models/task_item.dart';
 import '../utils/level_system.dart';
+import '../utils/streak_system.dart';
 import 'home_view.dart';
 import 'tasks_view.dart';
 import 'journal_view.dart';
@@ -10,7 +11,7 @@ import 'journal_view.dart';
 class MainWrapper extends StatefulWidget {
   final String userName;
   final String userAvatar;
-  final Map<String, int> allAvatarXps; // Tüm karakterlerin deposu
+  final Map<String, int> allAvatarXps;
 
   const MainWrapper({
     super.key,
@@ -28,12 +29,14 @@ class _MainWrapperState extends State<MainWrapper> {
   late String _currentUserName;
   late String _currentUserAvatar;
 
-  late Map<String, int> _allAvatarXps; // Ekranda anlık güncellenen depo
-  late int _currentUserXp; // Ekranda görünen aktif karakterin XP'si
+  late Map<String, int> _allAvatarXps;
+  late int _currentUserXp;
+
+  int _streakCount = 0;
+  bool _isStreakActive = false;
 
   late PageController _pageController;
 
-  // Başlangıç (varsayılan) görevlerimiz
   List<TaskItem> globalTasks = [
     TaskItem(
       id: '1',
@@ -67,8 +70,8 @@ class _MainWrapperState extends State<MainWrapper> {
 
     _pageController = PageController(initialPage: _selectedIndex);
 
-    // YENİ: Uygulama açılırken görevleri hafızadan çeker
     _loadTasks();
+    _loadStreak();
   }
 
   @override
@@ -77,7 +80,26 @@ class _MainWrapperState extends State<MainWrapper> {
     super.dispose();
   }
 
-  // YENİ: Görevleri cihaz hafızasından okuma
+  Future<void> _loadStreak() async {
+    final streak = await StreakSystem.checkStreak();
+    if (mounted) {
+      setState(() {
+        _streakCount = streak.count;
+        _isStreakActive = streak.isActive;
+      });
+    }
+  }
+
+  Future<void> _triggerStreak() async {
+    final streak = await StreakSystem.recordActivity();
+    if (mounted) {
+      setState(() {
+        _streakCount = streak.count;
+        _isStreakActive = streak.isActive;
+      });
+    }
+  }
+
   Future<void> _loadTasks() async {
     final prefs = await SharedPreferences.getInstance();
     final String? tasksJson = prefs.getString('global_tasks');
@@ -92,7 +114,6 @@ class _MainWrapperState extends State<MainWrapper> {
     }
   }
 
-  // YENİ: Görevleri cihaz hafızasına kaydetme
   Future<void> _saveTasks() async {
     final prefs = await SharedPreferences.getInstance();
     final String encodedTasks = json.encode(
@@ -126,6 +147,11 @@ class _MainWrapperState extends State<MainWrapper> {
       _allAvatarXps[_currentUserAvatar] = newXp;
       _currentUserXp = newXp;
     });
+
+    // Pozitif bir eylem (görev, odaklanma, rutin vb.) seriyi korur ve tetikler
+    if (amount > 0) {
+      _triggerStreak();
+    }
   }
 
   void _toggleTask(String taskId) {
@@ -137,7 +163,6 @@ class _MainWrapperState extends State<MainWrapper> {
         globalTasks[taskIndex].isCompleted = !wasCompleted;
       });
 
-      // YENİ: Görev durumu her değiştiğinde diskte de güncellenir
       _saveTasks();
 
       if (!wasCompleted) {
@@ -157,6 +182,8 @@ class _MainWrapperState extends State<MainWrapper> {
         userAvatar: _currentUserAvatar,
         userXp: _currentUserXp,
         allAvatarXps: _allAvatarXps,
+        streakCount: _streakCount,
+        isStreakActive: _isStreakActive,
         onUserPrefsChanged: _updateUserPrefs,
         onUserXpGained: _updateUserXp,
         onTaskToggled: _toggleTask,
@@ -165,7 +192,7 @@ class _MainWrapperState extends State<MainWrapper> {
         tasks: globalTasks,
         onTasksUpdated: () {
           setState(() {});
-          _saveTasks(); // YENİ: Görev listesinden bir şey silinir/eklenirse anında kaydeder
+          _saveTasks();
         },
         onTaskToggled: _toggleTask,
       ),
